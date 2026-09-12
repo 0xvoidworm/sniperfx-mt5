@@ -1,0 +1,8 @@
+InpTradingEnabled=false
+InpOperationMode=0
+InpSymbols=EURUSD,USDJPY,GBPUSD,USDCHF,AUDUSD,USDCAD,XAUUSD
+InpTimerSeconds=1
+InpBarsToCopy=200
+InpRiskPercent=1.0
+InpMaxMarginFraction=0.50
+InpMaxConcurrentPositions=1

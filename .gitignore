@@ -1,0 +1,8 @@
+# Compiled MetaTrader artifacts and local IDE state
+*.ex5
+*.log
+.vscode/
+
+# Local scratch files
+*.tmp
+*.bak
