@@ -13,3 +13,4 @@ Updated: 2026-09-12
 9. **Exit retries are candle-rate limited.** A failed four-bar close can retry only after the next M5 candle closes; a closed market cannot cause requests every timer tick.
 10. **Impulse quality is an optional research gate.** The shipped default is disabled (`0.0`). The XAU research profile uses `0.91`, selected from 2020–2023 feature quartiles and evaluated unchanged on later data.
 11. **Power means selectivity and controlled execution.** Higher leverage or looser limits are not treated as evidence of edge. Profitability must survive high-quality real-tick, cost-stress, and out-of-sample checks.
+12. **Visible discovery is isolated from execution.** Python may read terminal data, record observations, and publish versioned visualization rows, but exposes no order method. The MQL5 overlay also distinguishes a fresh Python heartbeat from a stale broker quote.

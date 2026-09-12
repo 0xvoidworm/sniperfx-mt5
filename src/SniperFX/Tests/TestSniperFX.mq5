@@ -1,5 +1,5 @@
 #property strict
-#property version "2.00"
+#property version "3.00"
 #property description "Deterministic offline unit harness for SniperFX pure logic."
 
 #include "..\Core\Config.mqh"
@@ -16,6 +16,7 @@
 #include "..\Management\BarTimeStop.mqh"
 #include "..\Management\PositionLifecycle.mqh"
 #include "..\Ops\StateStore.mqh"
+#include "..\Research\AlphaBridge.mqh"
 
 int g_passed=0;
 int g_failed=0;
@@ -108,6 +109,15 @@ void TestPoliciesAndIdentity()
    AssertTrue(!SubmitOutcomeUncertain("ORDERCHECK_REJECT",TRADE_RETCODE_INVALID_STOPS),"invalid_request_is_certain_reject");
    AssertTrue(ImpulseQualityPasses(0.91,0.91),"impulse_quality_accepts_boundary");
    AssertTrue(!ImpulseQualityPasses(0.909,0.91),"impulse_quality_rejects_below_boundary");
+   datetime generated=D'2026.01.02 00:00';
+   AssertTrue(ResearchZoneFresh(generated,generated+15,15),"alpha_zone_fresh_at_boundary");
+   AssertTrue(!ResearchZoneFresh(generated,generated+16,15),"alpha_zone_stale_after_boundary");
+   SResearchZone zone;
+   zone.symbol="XAUUSD.a";
+   AssertTrue(ResearchZoneMatchesSymbol(zone,"XAUUSD.a") &&
+              !ResearchZoneMatchesSymbol(zone,"XAUUSD"),"alpha_zone_requires_exact_broker_symbol");
+   AssertTrue(ResearchMarketStateStale("STALE_QUOTE_600S"),"alpha_market_stale_state_detected");
+   AssertTrue(!ResearchMarketStateStale("LIVE"),"alpha_live_market_state_detected");
   }
 
 void TestPendingEntryStability()

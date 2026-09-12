@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-09-12
+
+- Added the read-only Python Alpha Lab with initial round-level, confirmed-swing, previous-day, and directional-change research zones.
+- Added an append-only SQLite tick/observation ledger and causal four-M5-bar MFE/MAE/first-hit labels.
+- Added the versioned atomic `FILE_COMMON` bridge and visible MT5 zone/status overlay.
+- Separated Python heartbeat freshness from broker quote freshness so closed-market data is visibly marked stale.
+- Added foreground/background setup, start, and stop scripts.
+- Kept the MQL5 order path unchanged and scan-only by default.
+
 ## 0.2.0 - 2026-09-12
 
 - Wired the full H4/H1/M15/M5 candidate path through ranking, sizing, pending request construction, scan-only logging, guarded submit, transaction handling, and reconciliation.

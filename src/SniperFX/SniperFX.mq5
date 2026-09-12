@@ -1,5 +1,5 @@
 #property strict
-#property version "2.00"
+#property version "3.00"
 #property description "SniperFX causal multi-symbol MTF sniper; SCAN_ONLY by default."
 
 #include "Core\Config.mqh"
@@ -24,6 +24,8 @@
 #include "Management\StructuralExit.mqh"
 #include "Ops\StateStore.mqh"
 #include "Ops\DecisionJournal.mqh"
+#include "Research\AlphaBridge.mqh"
+#include "Visualization\ResearchOverlay.mqh"
 
 input bool InpTradingEnabled=false;
 input ENUM_OPERATION_MODE InpOperationMode=OPERATION_SCAN_ONLY;
@@ -57,6 +59,11 @@ input double InpStopBufferATR=0.10;
 input double InpEntryBufferTicks=1.0;
 input double InpMaxSpreadStopRatio=0.15;
 input int InpMaxTickAgeSeconds=30;
+input bool InpResearchOverlayEnabled=true;
+input string InpResearchBridgeFile="SniperFX\\alpha_zones.csv";
+input int InpResearchBridgeStaleSeconds=15;
+input int InpResearchOverlayRefreshSeconds=2;
+input int InpResearchOverlayMaxZones=8;
 
 SConfig g_config;
 CSymbolUniverse g_universe;
@@ -73,6 +80,9 @@ datetime g_last_health_log=0;
 ulong g_telemetry_position_ticket=0;
 datetime g_last_position_bar=0;
 datetime g_last_time_exit_attempt_bar=0;
+CAlphaBridge g_alpha_bridge;
+CResearchOverlay g_research_overlay;
+datetime g_last_research_overlay_refresh=0;
 
 string FsmName(const ENUM_SNIPER_FSM state)
   {
@@ -101,6 +111,19 @@ string DirectionName(const ENUM_SNIPER_DIRECTION direction)
    if(direction==DIRECTION_BUY) return("BUY");
    if(direction==DIRECTION_SELL) return("SELL");
    return("NONE");
+  }
+
+void RefreshResearchOverlay()
+  {
+   if(!InpResearchOverlayEnabled) return;
+   datetime now=TimeLocal();
+   if(g_last_research_overlay_refresh>0 &&
+      now-g_last_research_overlay_refresh<InpResearchOverlayRefreshSeconds) return;
+   g_last_research_overlay_refresh=now;
+   SResearchZone zones[];
+   string status;
+   int count=g_alpha_bridge.Read(zones,status);
+   g_research_overlay.Render(zones,count,status,g_alpha_bridge.LatestGeneratedAt());
   }
 
 void SetState(const ENUM_SNIPER_FSM next_state,const string reason)
@@ -587,6 +610,18 @@ int OnInit()
       return(INIT_FAILED);
    if(!g_state_store.Initialize(SNIPERFX_STRATEGY_ID,account_scope))
       return(INIT_FAILED);
+   if(InpResearchOverlayEnabled &&
+      !g_alpha_bridge.Initialize(InpResearchBridgeFile,InpResearchBridgeStaleSeconds,
+                                 InpResearchOverlayMaxZones))
+     {
+      Print("SNIPERFX_ALPHA_BRIDGE_CONFIG_REJECT");
+      return(INIT_PARAMETERS_INCORRECT);
+     }
+   if(InpResearchOverlayRefreshSeconds<1 || InpResearchOverlayRefreshSeconds>60)
+     {
+      Print("SNIPERFX_ALPHA_OVERLAY_REFRESH_REJECT");
+      return(INIT_PARAMETERS_INCORRECT);
+     }
    g_state_store.Save("trading_enabled",g_config.trading_enabled ? 1.0 : 0.0);
    g_state_store.Flush();
 
@@ -640,6 +675,7 @@ int OnInit()
 
 void OnTimer()
   {
+   RefreshResearchOverlay();
    ReconcileRuntimeState();
    ManagePendingOrders();
    ManageOpenPositions();
@@ -796,6 +832,7 @@ double OnTester()
 void OnDeinit(const int reason)
   {
    EventKillTimer();
+   g_research_overlay.Clear();
    if(g_active_intent.recorded) g_state_store.SaveIntent(g_active_intent);
    g_state_store.Flush();
    g_journal.Write("DEINIT","",FsmName(g_state),FsmName(g_state),
