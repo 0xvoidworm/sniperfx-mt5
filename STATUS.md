@@ -12,13 +12,14 @@ Updated: 2026-09-12
 - [x] Deterministic tester harness executed in a credential-free portable terminal: 45 passed, 0 failed
 - [x] Phase 1 read-only Python Alpha Lab with atomic bridge, SQLite discovery ledger, and visible MT5 research zones
 - [x] Independent Python-heartbeat and broker-quote freshness state (`PYTHON_ACTIVE_MARKET_STALE` on closed/stale feed)
+- [x] Exact `Yuri Clean Dark.tpl` palette applied automatically to the attached chart
 - [x] Isolated market-data scans and one-minute-OHLC Strategy Tester baselines
 - [x] Chronological XAUUSD research split: impulse-quality threshold selected on 2020–2023 and checked on 2024–2026
 - [ ] Full-quality real-tick backtest, cost stress, and rolling walk-forward validation
 - [ ] Restart, timeout, order-cancel, and partial-fill integration simulations
 - [ ] Guarded demo burn-in and profitability evidence
 
-Latest compiler result: main and tests both 0 errors, 0 warnings. Main SHA-256: `4F6EDAA40EA7248E99EE49B69E6555121D067439B37AE0113ADD38D0BB4EDDB4`.
+Latest compiler result: main and tests both 0 errors, 0 warnings. Main SHA-256: `252786FE8D820554A5D104D96610DEF259D50E53B26C8427769217DD1B0C81ED`.
 
 Phase 1 live-read check: exact broker symbol `XAUUSD` resolved; 800 completed M5 bars and 1,591 bid/ask ticks were acquired; six causal zones were published. The background process is active, while the current broker quote is correctly marked stale because the market is closed.
 

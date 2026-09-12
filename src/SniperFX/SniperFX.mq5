@@ -26,6 +26,7 @@
 #include "Ops\DecisionJournal.mqh"
 #include "Research\AlphaBridge.mqh"
 #include "Visualization\ResearchOverlay.mqh"
+#include "Visualization\YuriCleanDarkTheme.mqh"
 
 input bool InpTradingEnabled=false;
 input ENUM_OPERATION_MODE InpOperationMode=OPERATION_SCAN_ONLY;
@@ -64,6 +65,7 @@ input string InpResearchBridgeFile="SniperFX\\alpha_zones.csv";
 input int InpResearchBridgeStaleSeconds=15;
 input int InpResearchOverlayRefreshSeconds=2;
 input int InpResearchOverlayMaxZones=8;
+input bool InpApplyYuriCleanDark=true;
 
 SConfig g_config;
 CSymbolUniverse g_universe;
@@ -670,6 +672,8 @@ int OnInit()
       if(persisted) { g_state_store.ClearIntent(); ResetIntent(g_active_intent); }
       SetState(FSM_SYNCING,"INIT");
      }
+   if(InpApplyYuriCleanDark && !ApplyYuriCleanDarkChartStyle(0))
+      Print("SNIPERFX_YURI_CLEAN_DARK_PARTIAL_APPLY");
    return(INIT_SUCCEEDED);
   }
 

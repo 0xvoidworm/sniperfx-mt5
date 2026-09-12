@@ -20,4 +20,4 @@ pwsh -NoProfile -File .\scripts\setup_alpha_lab.ps1
 pwsh -NoProfile -File .\scripts\start_alpha_lab.ps1 -Symbol XAUUSD
 ```
 
-See `docs/PHASE1_ALPHA_LAB.md` for the bridge, chart legend, data locations, and current limitations. The displayed `SCORE` is a hypothesis-ranking value, not a win probability.
+See `docs/PHASE1_ALPHA_LAB.md` for the bridge, chart legend, data locations, and current limitations. The displayed `SCORE` is a hypothesis-ranking value, not a win probability. Attached charts use the saved `Yuri Clean Dark` palette by default.

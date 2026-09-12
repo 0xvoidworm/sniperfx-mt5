@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 - 2026-09-12
+
+- Applied the exact `Yuri Clean Dark` chart palette and layout whenever SniperFX is attached.
+- Kept the styling optional through `InpApplyYuriCleanDark`; applying it does not replace or unload the EA.
+
 ## 0.3.0 - 2026-09-12
 
 - Added the read-only Python Alpha Lab with initial round-level, confirmed-swing, previous-day, and directional-change research zones.

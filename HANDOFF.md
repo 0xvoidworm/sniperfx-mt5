@@ -13,6 +13,7 @@ It is **not live-ready and not proven profitable**. The correct current operatin
 - Portable MetaTrader math-mode harness passes 45/45 and contains no account database.
 - The Python Alpha Lab resolved the real broker symbol `XAUUSD`, read 800 completed M5 bars and 1,591 ticks, published six Bridge V2 zones, and continuously advances its heartbeat.
 - The broker feed was closed/stale during verification, and the bridge correctly published `STALE_QUOTE_*` instead of presenting the old quote as live.
+- Attached charts automatically receive the saved `Yuri Clean Dark` palette through non-destructive chart-property updates.
 - Main source has one `OrderSend` call, inside the double-gated `SubmitGuarded` function.
 - The XAUUSD quality-gated Model=1 candidate returned 53 trades, +538.03, PF 1.4596, and 2.8896% drawdown over 2020–2026; six of seven calendar years were positive.
 - Model=4 history coverage was insufficient (4% on the long validation range, 66% on the short available range), so no full-quality real-tick pass exists.

@@ -56,8 +56,9 @@ The broker symbol is resolved exactly when possible. If several prefix/suffix va
 1. Open the broker's exact XAUUSD chart.
 2. In Navigator, refresh Expert Advisors and attach `SniperFX\SniperFX` to that chart.
 3. Keep `InpResearchOverlayEnabled=true` and `InpResearchBridgeFile=SniperFX\alpha_zones.csv`.
-4. `Algo Trading` may stay disabled; the overlay does not require live-order permission.
-5. The top-left heartbeat reads `SFX ALPHA LAB | PYTHON_ACTIVE` only while Python is publishing and the broker quote is fresh.
+4. Keep `InpApplyYuriCleanDark=true`; the EA applies the exact saved `Yuri Clean Dark.tpl` palette without unloading itself.
+5. `Algo Trading` may stay disabled; the overlay does not require live-order permission.
+6. The top-left heartbeat reads `SFX ALPHA LAB | PYTHON_ACTIVE` only while Python is publishing and the broker quote is fresh.
 
 Chart legend:
 
