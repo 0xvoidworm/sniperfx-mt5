@@ -30,6 +30,7 @@ input ENUM_OPERATION_MODE InpOperationMode=OPERATION_SCAN_ONLY;
 input string InpSymbols="EURUSD,USDJPY,GBPUSD,USDCHF,AUDUSD,USDCAD,XAUUSD";
 input ulong InpMagic=92726001;
 input int InpTimerSeconds=1;
+input int InpHealthLogSeconds=60;
 input int InpBarsToCopy=200;
 input double InpRiskPercent=1.0;
 input double InpMaxMarginFraction=0.50;
@@ -46,6 +47,7 @@ input double InpMinNormalizedSlope=0.05;
 input double InpMinTrendEfficiency=0.25;
 input double InpMinImpulseATR=1.0;
 input double InpMinImpulseBodyFraction=0.45;
+input double InpMinImpulseQuality=0.0;
 input double InpPullbackMinDepth=0.25;
 input double InpPullbackMaxDepth=0.70;
 input int InpPullbackMinBars=2;
@@ -68,6 +70,9 @@ datetime g_last_m5_bar[];
 ENUM_SNIPER_FSM g_state=FSM_BOOT;
 STradeIntent g_active_intent;
 datetime g_last_health_log=0;
+ulong g_telemetry_position_ticket=0;
+datetime g_last_position_bar=0;
+datetime g_last_time_exit_attempt_bar=0;
 
 string FsmName(const ENUM_SNIPER_FSM state)
   {
@@ -114,6 +119,7 @@ void ApplyInputs(SConfig &config)
    config.symbol_list=InpSymbols;
    config.magic=InpMagic;
    config.timer_seconds=InpTimerSeconds;
+   config.health_log_seconds=InpHealthLogSeconds;
    config.bars_to_copy=InpBarsToCopy;
    config.risk_percent=InpRiskPercent;
    config.max_margin_fraction=InpMaxMarginFraction;
@@ -130,6 +136,7 @@ void ApplyInputs(SConfig &config)
    config.min_trend_efficiency=InpMinTrendEfficiency;
    config.min_impulse_atr=InpMinImpulseATR;
    config.min_impulse_body_fraction=InpMinImpulseBodyFraction;
+   config.min_impulse_quality=InpMinImpulseQuality;
    config.pullback_min_depth=InpPullbackMinDepth;
    config.pullback_max_depth=InpPullbackMaxDepth;
    config.pullback_min_bars=InpPullbackMinBars;
@@ -187,6 +194,8 @@ bool BuildCandidateForIndex(const int index,STradeCandidate &candidate,string &r
    if(!DetectImpulse(h1,ArraySize(h1),regime.direction,g_config.pivot_left_right,
                      g_config.min_impulse_atr,g_config.min_impulse_body_fraction,impulse))
      { reason="IMPULSE_"+impulse.reason; return(false); }
+   if(!ImpulseQualityPasses(impulse.quality,g_config.min_impulse_quality))
+     { reason="IMPULSE_QUALITY_BELOW_MIN"; return(false); }
 
    SPullback pullback;
    if(!DetectPullback(m15,ArraySize(m15),impulse,g_config.pullback_min_depth,
@@ -469,7 +478,43 @@ void ManageOpenPositions()
       any=true;
       string symbol=PositionGetString(POSITION_SYMBOL);
       datetime fill_time=(datetime)PositionGetInteger(POSITION_TIME);
+      if(g_telemetry_position_ticket!=ticket)
+        {
+         g_telemetry_position_ticket=ticket;
+         g_last_position_bar=0;
+         g_last_time_exit_attempt_bar=0;
+        }
+      datetime closed_bar=iTime(symbol,PERIOD_M5,1);
+      if(closed_bar>g_last_position_bar)
+        {
+         g_last_position_bar=closed_bar;
+         double entry=PositionGetDouble(POSITION_PRICE_OPEN);
+         double stop=PositionGetDouble(POSITION_SL);
+         long position_type=PositionGetInteger(POSITION_TYPE);
+         double high=iHigh(symbol,PERIOD_M5,1);
+         double low=iLow(symbol,PERIOD_M5,1);
+         double close=iClose(symbol,PERIOD_M5,1);
+         double risk=MathAbs(entry-stop);
+         if(risk>0.0 && high>0.0 && low>0.0 && close>0.0)
+           {
+            double favorable=(position_type==POSITION_TYPE_BUY ? high-entry : entry-low)/risk;
+            double adverse=(position_type==POSITION_TYPE_BUY ? entry-low : high-entry)/risk;
+            double close_r=(position_type==POSITION_TYPE_BUY ? close-entry : entry-close)/risk;
+            int elapsed=ClosedM5BarsSinceFill(symbol,fill_time);
+            string telemetry="ticket="+IntegerToString((long)ticket)+
+                             ";bar="+IntegerToString(elapsed)+
+                             ";close_r="+DoubleToString(close_r,4)+
+                             ";favorable_r="+DoubleToString(favorable,4)+
+                             ";adverse_r="+DoubleToString(adverse,4);
+            g_journal.Write("POSITION_BAR",symbol,FsmName(g_state),FsmName(g_state),
+                            "CLOSED_M5",closed_bar,telemetry);
+           }
+        }
       if(!TimeStopReached(symbol,fill_time,g_config.time_stop_m5_bars)) continue;
+      // A closed market or transient broker rejection must not trigger a request
+      // every timer tick. Retry once when the next M5 bar has closed.
+      if(!ShouldAttemptExitOnClosedBar(closed_bar,g_last_time_exit_attempt_bar)) continue;
+      g_last_time_exit_attempt_bar=closed_bar;
       if(!g_config.trading_enabled)
         {
          g_journal.Write("WOULD_TIME_EXIT",symbol,FsmName(g_state),FsmName(g_state),
@@ -491,6 +536,12 @@ void ManageOpenPositions()
       g_journal.Write("TIME_EXIT_SUBMIT",symbol,FsmName(g_state),FsmName(g_state),submit_reason,
                       fill_time,"ticket="+IntegerToString((long)ticket)+";ok="+IntegerToString(ok ? 1 : 0));
       if(!ok) SetState(FSM_SAFE_MODE,"TIME_EXIT_FAILED");
+     }
+   if(!any)
+     {
+      g_telemetry_position_ticket=0;
+      g_last_position_bar=0;
+      g_last_time_exit_attempt_bar=0;
      }
    if(any && g_state!=FSM_EXITING && g_state!=FSM_SAFE_MODE) SetState(FSM_MANAGING,"POSITION_PRESENT");
   }
@@ -641,7 +692,7 @@ void OnTimer()
      }
 
    datetime now=TimeCurrent();
-   if(g_last_health_log==0 || now-g_last_health_log>=60)
+   if(g_last_health_log==0 || now-g_last_health_log>=g_config.health_log_seconds)
      {
       g_last_health_log=now;
       g_journal.Write("HEALTH","",FsmName(g_state),FsmName(g_state),"TIMER",0,
@@ -696,6 +747,16 @@ void OnTradeTransaction(const MqlTradeTransaction &transaction,const MqlTradeReq
       HistoryDealSelect(transaction.deal))
      {
       long entry=HistoryDealGetInteger(transaction.deal,DEAL_ENTRY);
+      string deal_details="deal="+IntegerToString((long)transaction.deal)+
+                          ";entry="+IntegerToString((int)entry)+
+                          ";price="+DoubleToString(HistoryDealGetDouble(transaction.deal,DEAL_PRICE),8)+
+                          ";volume="+DoubleToString(HistoryDealGetDouble(transaction.deal,DEAL_VOLUME),4)+
+                          ";profit="+DoubleToString(HistoryDealGetDouble(transaction.deal,DEAL_PROFIT),2)+
+                          ";commission="+DoubleToString(HistoryDealGetDouble(transaction.deal,DEAL_COMMISSION),2)+
+                          ";swap="+DoubleToString(HistoryDealGetDouble(transaction.deal,DEAL_SWAP),2);
+      g_journal.Write("DEAL",symbol,FsmName(g_state),FsmName(g_state),
+                      entry==DEAL_ENTRY_OUT || entry==DEAL_ENTRY_OUT_BY ? "EXIT" : "ENTRY",
+                      TimeCurrent(),deal_details);
       if(entry==DEAL_ENTRY_IN || entry==DEAL_ENTRY_INOUT)
         {
          g_active_intent.position_ticket=transaction.position;
@@ -719,9 +780,14 @@ void OnTradeTransaction(const MqlTradeTransaction &transaction,const MqlTradeReq
 double OnTester()
   {
    double trades=TesterStatistics(STAT_TRADES);
+   double net_profit=TesterStatistics(STAT_PROFIT);
    double drawdown=TesterStatistics(STAT_EQUITY_DDREL_PERCENT);
    double profit_factor=TesterStatistics(STAT_PROFIT_FACTOR);
    double recovery=TesterStatistics(STAT_RECOVERY_FACTOR);
+   double expected_payoff=TesterStatistics(STAT_EXPECTED_PAYOFF);
+   double sharpe=TesterStatistics(STAT_SHARPE_RATIO);
+   PrintFormat("SNIPERFX_TEST_METRICS,trades=%.0f,net=%.2f,pf=%.6f,dd_pct=%.4f,recovery=%.6f,expectancy=%.6f,sharpe=%.6f",
+               trades,net_profit,profit_factor,drawdown,recovery,expected_payoff,sharpe);
    if(trades<10.0 || profit_factor<=0.0 || profit_factor>=DBL_MAX/2.0)
       return(-1000000.0+trades);
    return((profit_factor*MathMax(0.0,recovery))/(1.0+MathMax(0.0,drawdown)));

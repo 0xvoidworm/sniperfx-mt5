@@ -16,6 +16,11 @@ ENUM_ORDER_TYPE_FILLING MarketFillingMode(const SBrokerCapabilities &caps)
    return(ORDER_FILLING_RETURN);
   }
 
+bool ShouldAttemptExitOnClosedBar(const datetime closed_bar,const datetime last_attempt_bar)
+  {
+   return(closed_bar>0 && closed_bar>last_attempt_bar);
+  }
+
 bool BuildClosePositionRequest(const ulong ticket,const ulong magic,MqlTradeRequest &request,string &reason)
   {
    ZeroMemory(request);
@@ -43,4 +48,3 @@ bool BuildClosePositionRequest(const ulong ticket,const ulong magic,MqlTradeRequ
   }
 
 #endif
-

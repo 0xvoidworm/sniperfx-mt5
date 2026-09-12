@@ -27,12 +27,18 @@ public:
 
    bool Refresh(const ENUM_TIMEFRAMES timeframe,const int requested)
      {
-      if(m_symbol=="" || !SymbolIsSynchronized(m_symbol))
+      if(m_symbol=="")
          return(false);
-      long synchronized=0;
-      if(!SeriesInfoInteger(m_symbol,timeframe,SERIES_SYNCHRONIZED,synchronized) || synchronized==0)
-         return(false);
+      // CopyRates is also the synchronization trigger for non-chart symbols in
+      // the Strategy Tester and on a fresh terminal. Do not gate it behind a
+      // SERIES_SYNCHRONIZED check or those symbols can remain cold forever.
+      ResetLastError();
       int copied=CopyRates(m_symbol,timeframe,0,requested,m_rates);
+      long synchronized=0;
+      if(!SymbolIsSynchronized(m_symbol) ||
+         !SeriesInfoInteger(m_symbol,timeframe,SERIES_SYNCHRONIZED,synchronized) ||
+         synchronized==0)
+         return(false);
       if(copied<requested || copied<3)
          return(false);
       if(m_rates[1].time<=0 || m_rates[1].time>=m_rates[0].time)

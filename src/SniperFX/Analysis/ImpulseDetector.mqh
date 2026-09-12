@@ -22,6 +22,11 @@ struct SImpulse
    string reason;
   };
 
+bool ImpulseQualityPasses(const double quality,const double minimum_quality)
+  {
+   return(quality>=minimum_quality);
+  }
+
 bool DetectImpulse(const MqlRates &bars[],const int count,const ENUM_SNIPER_DIRECTION direction,
                    const int pivot_left_right,const double min_displacement_atr,
                    const double min_body_fraction,SImpulse &impulse)
@@ -93,4 +98,3 @@ bool DetectImpulse(const MqlRates &bars[],const int count,const ENUM_SNIPER_DIRE
   }
 
 #endif
-

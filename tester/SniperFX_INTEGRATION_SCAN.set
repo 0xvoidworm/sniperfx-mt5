@@ -1,0 +1,10 @@
+InpTradingEnabled=false
+InpOperationMode=0
+InpSymbols=EURUSD
+InpTimerSeconds=5
+InpHealthLogSeconds=300
+InpBarsToCopy=200
+InpRiskPercent=1.0
+InpMaxMarginFraction=0.50
+InpMaxConcurrentPositions=1
+InpMinImpulseQuality=0.0

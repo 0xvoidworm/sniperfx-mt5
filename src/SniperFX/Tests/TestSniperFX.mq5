@@ -7,12 +7,14 @@
 #include "..\Data\BrokerCapabilities.mqh"
 #include "..\Analysis\ConfirmedPivotDetector.mqh"
 #include "..\Analysis\TrendRegimeModel.mqh"
+#include "..\Analysis\ImpulseDetector.mqh"
 #include "..\Analysis\TriggerDetector.mqh"
 #include "..\Analysis\CandidateRanker.mqh"
 #include "..\Risk\CurrencyExposure.mqh"
 #include "..\Execution\PendingOrderBuilder.mqh"
 #include "..\Execution\ExecutionEngine.mqh"
 #include "..\Management\BarTimeStop.mqh"
+#include "..\Management\PositionLifecycle.mqh"
 #include "..\Ops\StateStore.mqh"
 
 int g_passed=0;
@@ -70,6 +72,12 @@ void TestConfig()
    ConfigDefaults(config);
    config.max_margin_fraction=1.0;
    AssertTrue(!ConfigValidate(config,reason) && reason=="INVALID_MARGIN_FRACTION","config_rejects_unbounded_margin");
+   ConfigDefaults(config);
+   config.health_log_seconds=30;
+   AssertTrue(!ConfigValidate(config,reason) && reason=="INVALID_HEALTH_INTERVAL","config_rejects_noisy_health_interval");
+   ConfigDefaults(config);
+   config.min_impulse_quality=1.01;
+   AssertTrue(!ConfigValidate(config,reason) && reason=="INVALID_IMPULSE_QUALITY","config_rejects_invalid_impulse_quality");
   }
 
 void TestSymbolParsing()
@@ -87,6 +95,10 @@ void TestPoliciesAndIdentity()
    AssertTrue(TradeRetcodeClass(TRADE_RETCODE_INVALID_STOPS)=="PERMANENT_REQUEST","invalid_stop_policy");
    AssertTrue(!TimeStopReachedByCount(3,4),"time_stop_not_early");
    AssertTrue(TimeStopReachedByCount(4,4),"time_stop_on_fourth_closed_bar");
+   datetime exit_bar=D'2026.01.02 00:20';
+   AssertTrue(ShouldAttemptExitOnClosedBar(exit_bar,0),"time_exit_first_attempt_allowed");
+   AssertTrue(!ShouldAttemptExitOnClosedBar(exit_bar,exit_bar),"time_exit_same_bar_retry_blocked");
+   AssertTrue(ShouldAttemptExitOnClosedBar(exit_bar+300,exit_bar),"time_exit_next_bar_retry_allowed");
    uint first=StableStringHash("scope|EURUSD|1|100|200|300");
    uint second=StableStringHash("scope|EURUSD|1|100|200|300");
    uint changed=StableStringHash("scope|EURUSD|-1|100|200|300");
@@ -94,6 +106,8 @@ void TestPoliciesAndIdentity()
    AssertTrue(SubmitOutcomeUncertain("ORDERSEND_CALL_FAILED_4756",0),"send_transport_failure_is_uncertain");
    AssertTrue(SubmitOutcomeUncertain("TRANSIENT_INFRASTRUCTURE",TRADE_RETCODE_TIMEOUT),"timeout_retcode_is_uncertain");
    AssertTrue(!SubmitOutcomeUncertain("ORDERCHECK_REJECT",TRADE_RETCODE_INVALID_STOPS),"invalid_request_is_certain_reject");
+   AssertTrue(ImpulseQualityPasses(0.91,0.91),"impulse_quality_accepts_boundary");
+   AssertTrue(!ImpulseQualityPasses(0.909,0.91),"impulse_quality_rejects_below_boundary");
   }
 
 void TestPendingEntryStability()

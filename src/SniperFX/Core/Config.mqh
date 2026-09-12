@@ -1,7 +1,7 @@
 #ifndef SNIPERFX_CONFIG_MQH
 #define SNIPERFX_CONFIG_MQH
 
-#define SNIPERFX_VERSION "0.2.0"
+#define SNIPERFX_VERSION "0.2.2"
 #define SNIPERFX_STRATEGY_ID "SNIPERFX_MTF"
 
 enum ENUM_OPERATION_MODE
@@ -17,6 +17,7 @@ struct SConfig
    string symbol_list;
    ulong magic;
    int timer_seconds;
+   int health_log_seconds;
    int bars_to_copy;
    double risk_percent;
    double max_margin_fraction;
@@ -33,6 +34,7 @@ struct SConfig
    double min_trend_efficiency;
    double min_impulse_atr;
    double min_impulse_body_fraction;
+   double min_impulse_quality;
    double pullback_min_depth;
    double pullback_max_depth;
    int pullback_min_bars;
@@ -51,6 +53,7 @@ void ConfigDefaults(SConfig &config)
    config.symbol_list="EURUSD,USDJPY,GBPUSD,USDCHF,AUDUSD,USDCAD,XAUUSD";
    config.magic=92726001;
    config.timer_seconds=1;
+   config.health_log_seconds=60;
    config.bars_to_copy=200;
    config.risk_percent=1.0;
    config.max_margin_fraction=0.50;
@@ -67,6 +70,7 @@ void ConfigDefaults(SConfig &config)
    config.min_trend_efficiency=0.25;
    config.min_impulse_atr=1.0;
    config.min_impulse_body_fraction=0.45;
+   config.min_impulse_quality=0.0;
    config.pullback_min_depth=0.25;
    config.pullback_max_depth=0.70;
    config.pullback_min_bars=2;
@@ -85,6 +89,7 @@ bool ConfigValidate(const SConfig &config,string &reason)
    if(config.symbol_list=="") { reason="EMPTY_SYMBOL_LIST"; return(false); }
    if(config.magic==0) { reason="INVALID_MAGIC"; return(false); }
    if(config.timer_seconds<1 || config.timer_seconds>60) { reason="INVALID_TIMER"; return(false); }
+   if(config.health_log_seconds<60 || config.health_log_seconds>3600) { reason="INVALID_HEALTH_INTERVAL"; return(false); }
    if(config.bars_to_copy<64 || config.bars_to_copy>5000) { reason="INVALID_BAR_COUNT"; return(false); }
    if(config.risk_percent<=0.0 || config.risk_percent>10.0) { reason="INVALID_RISK"; return(false); }
    if(config.max_margin_fraction<=0.0 || config.max_margin_fraction>0.90) { reason="INVALID_MARGIN_FRACTION"; return(false); }
@@ -97,6 +102,7 @@ bool ConfigValidate(const SConfig &config,string &reason)
    if(config.trend_slope_lookback<5 || config.trend_efficiency_lookback<3) { reason="INVALID_TREND_LOOKBACK"; return(false); }
    if(config.min_normalized_slope<0.0 || config.min_trend_efficiency<=0.0 || config.min_trend_efficiency>1.0) { reason="INVALID_TREND_THRESHOLD"; return(false); }
    if(config.min_impulse_atr<=0.0 || config.min_impulse_body_fraction<=0.0 || config.min_impulse_body_fraction>1.0) { reason="INVALID_IMPULSE"; return(false); }
+   if(config.min_impulse_quality<0.0 || config.min_impulse_quality>1.0) { reason="INVALID_IMPULSE_QUALITY"; return(false); }
    if(config.pullback_min_depth<0.0 || config.pullback_max_depth<=config.pullback_min_depth || config.pullback_max_depth>1.5) { reason="INVALID_PULLBACK_DEPTH"; return(false); }
    if(config.pullback_min_bars<1 || config.pullback_max_bars<config.pullback_min_bars) { reason="INVALID_PULLBACK_BARS"; return(false); }
    if(config.zone_half_width_atr<=0.0 || config.stop_buffer_atr<0.0 || config.entry_buffer_ticks<0.0) { reason="INVALID_PRICE_BUFFER"; return(false); }
