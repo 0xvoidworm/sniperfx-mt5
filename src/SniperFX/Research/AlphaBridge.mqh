@@ -153,10 +153,9 @@ public:
       datetime now=TimeGMT();
       if(!ResearchZoneFresh(newest,now,m_stale_seconds))
         {
-         ArrayResize(zones,0);
          if(newest<=0) status="PYTHON_ONLINE_NO_ZONES";
          else status="PYTHON_STALE_"+IntegerToString((long)(now-newest))+"S";
-         return(0);
+         return(count);
         }
       if(ResearchMarketStateStale(m_latest_market_state))
          status="PYTHON_ACTIVE_MARKET_STALE";

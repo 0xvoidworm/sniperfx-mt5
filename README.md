@@ -11,7 +11,7 @@ pwsh -NoProfile -File .\scripts\deploy_and_compile.ps1
 pwsh -NoProfile -File .\scripts\run_unit_tester_isolated.ps1
 ```
 
-Latest result: both targets compile with 0 errors/0 warnings; isolated test harness passes 45/45 without an account database. The XAUUSD quality-gated research profile is profitable in a 2020–2026 one-minute-OHLC test, but full-quality real-tick evidence is unavailable and the EA is not live-ready. Read `STATUS.md`, `TEST_RESULTS.md`, `HANDOFF.md`, `DECISIONS.md`, and `KNOWN_GAPS.md` before any tester or live operation.
+Latest result: both targets compile with 0 errors/0 warnings; isolated test harness passes 47/47 without an account database. The XAUUSD quality-gated research profile is profitable in a 2020–2026 one-minute-OHLC test, but full-quality real-tick evidence is unavailable and the EA is not live-ready. Read `STATUS.md`, `TEST_RESULTS.md`, `HANDOFF.md`, `DECISIONS.md`, and `KNOWN_GAPS.md` before any tester or live operation.
 
 Start the Phase 1 visual discovery loop after one-time setup:
 

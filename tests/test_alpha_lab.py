@@ -9,6 +9,7 @@ import unittest
 from alpha_lab.bridge import BRIDGE_FIELDS, publish_zones
 from alpha_lab.detector import BUY, DetectorConfig, discover_zones, label_four_bar_outcome
 from alpha_lab.models import Bar, ResearchZone, Tick
+from alpha_lab.runner import retry_delay_seconds
 from alpha_lab.store import AlphaLabStore
 
 
@@ -55,6 +56,9 @@ def sample_zone() -> ResearchZone:
 
 
 class DetectorTests(unittest.TestCase):
+    def test_mt5_ipc_retry_backoff_is_bounded(self) -> None:
+        self.assertEqual([retry_delay_seconds(index) for index in range(1, 6)], [1.0, 2.0, 4.0, 8.0, 10.0])
+
     def test_discovers_visible_causal_zones(self) -> None:
         bars = synthetic_bars()
         zones = discover_zones(

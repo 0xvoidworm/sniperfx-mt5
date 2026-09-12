@@ -4,14 +4,14 @@ Updated: 2026-09-12
 
 ## Engineering PASS
 
-- MetaEditor build on 2026-09-12 12:50 WIB: main EA 0 errors/0 warnings; test EA 0 errors/0 warnings.
-- Fresh main SHA-256: `252786FE8D820554A5D104D96610DEF259D50E53B26C8427769217DD1B0C81ED`.
-- Fresh test SHA-256: `4BB1A592A1AD06C95E52066B2D0E6028C9B4C189EA0908725BC6AEC58133BA8C`.
-- Isolated MetaTrader `Model=3` run on 2026-09-12 12:50 WIB: 45 passed, 0 failed, terminal exit 0.
+- MetaEditor build on 2026-09-12 13:21 WIB: main EA 0 errors/0 warnings; test EA 0 errors/0 warnings.
+- Fresh main SHA-256: `6102BC8E2633D799D77FAECBA9242EF1BD4CBFFAC5969EC8CF1F426057EE6286`.
+- Fresh test SHA-256: `BD08E1704E3E98708AA09877041DD3EB9438DFCA3C9E29A86EE857CC8346BBBE`.
+- Isolated MetaTrader `Model=3` run on 2026-09-12 13:21 WIB: 47 passed, 0 failed, terminal exit 0.
 - The isolated unit terminal had no `accounts.dat`; it used no broker history and sent no order.
 - Covered pure logic includes configuration gates, timeout classification, pending-entry stability, state round-trip with large tickets, symbol parsing/exposure, causal pivots, efficiency, buy/sell triggers, ranking, bar-count time stop, impulse-quality bounds, and once-per-M5-bar time-exit retry.
 - Static order-path audit finds one `OrderSend` call, inside `SubmitGuarded`; default inputs block before `OrderCheck` and `OrderSend`.
-- Python unit suite passes 3/3, and bytecode compilation passes.
+- Python unit suite passes 4/4, including bounded reconnect backoff; bytecode compilation passes.
 - Actual terminal acquisition resolved exact symbol `XAUUSD`, loaded 800 completed M5 bars, retained 1,591 unique ticks, and published six causal Bridge V2 zones.
 - A three-second heartbeat check advanced the bridge timestamp while the background process remained alive with empty stderr. The quote itself was roughly five hours old, so market state correctly remained `STALE_QUOTE_*`.
 - The EA now applies the exact saved `Yuri Clean Dark.tpl` palette through chart properties; it does not call `ChartApplyTemplate`, so styling cannot unload the attached EA.

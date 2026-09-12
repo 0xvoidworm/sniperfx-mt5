@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 - 2026-09-12
+
+- Kept the last valid research zones visible with a yellow `PYTHON_STALE_*` status during terminal disconnects instead of clearing the chart.
+- Added bounded Python-side reconnect after transient IPC and terminal-authorization failures.
+
 ## 0.3.1 - 2026-09-12
 
 - Applied the exact `Yuri Clean Dark` chart palette and layout whenever SniperFX is attached.

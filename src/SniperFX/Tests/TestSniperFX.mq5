@@ -120,6 +120,35 @@ void TestPoliciesAndIdentity()
    AssertTrue(!ResearchMarketStateStale("LIVE"),"alpha_live_market_state_detected");
   }
 
+void TestAlphaBridgeStaleRetention()
+  {
+   string file_name="SniperFX\\unit_alpha_zones.csv";
+   int handle=FileOpen(file_name,FILE_WRITE|FILE_CSV|FILE_ANSI|FILE_COMMON,';');
+   if(handle==INVALID_HANDLE)
+     {
+      AssertTrue(false,"alpha_stale_fixture_created");
+      return;
+     }
+   FileWrite(handle,"schema","generated_at","zone_id","symbol","time_start","time_end",
+             "low_price","high_price","direction","research_score","state","source",
+             "market_state","reason");
+   datetime generated=(datetime)1;
+   FileWrite(handle,SNIPERFX_ALPHA_SCHEMA,IntegerToString(generated),"UNIT","XAUUSD",
+             IntegerToString(generated-300),IntegerToString(generated+3600),"2499.5","2500.5",
+             "1","0.75","WATCH","ROUND","LIVE","unit");
+   FileClose(handle);
+
+   CAlphaBridge bridge;
+   SResearchZone zones[];
+   string status;
+   bool initialized=bridge.Initialize(file_name,15,8);
+   int count=initialized ? bridge.Read(zones,status) : 0;
+   AssertTrue(count==1 && ArraySize(zones)==1 && zones[0].zone_id=="UNIT",
+              "alpha_stale_zone_retained");
+   AssertTrue(StringFind(status,"PYTHON_STALE_")==0,"alpha_stale_status_visible");
+   FileDelete(file_name,FILE_COMMON);
+  }
+
 void TestPendingEntryStability()
   {
    SBrokerCapabilities caps;
@@ -235,6 +264,7 @@ int OnInit()
   {
    TestConfig();
    TestPoliciesAndIdentity();
+   TestAlphaBridgeStaleRetention();
    TestPendingEntryStability();
    TestIntentRoundTrip();
    TestSymbolParsing();

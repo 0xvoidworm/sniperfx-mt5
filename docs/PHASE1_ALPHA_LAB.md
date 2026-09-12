@@ -43,6 +43,8 @@ Hidden background process:
 pwsh -NoProfile -File .\scripts\start_alpha_lab.ps1 -Symbol XAUUSD
 ```
 
+The continuous runner automatically reconnects after transient MetaTrader IPC failures with a bounded 1–10 second backoff. During the gap the chart reports a stale bridge; after recovery fresh zones are published again.
+
 Stop the background process:
 
 ```powershell
@@ -67,7 +69,7 @@ Chart legend:
 - gold zone: current price is touching the area;
 - `ACCEPTED`: the latest completed bar interacted with the area and closed on the expected side;
 - `WATCH`: nearby area, not yet triggered;
-- `PYTHON_STALE_*S`: Python stopped or its bridge is no longer fresh.
+- `PYTHON_STALE_*S`: Python stopped or its bridge is no longer fresh; the last valid zones remain visible in research-only mode.
 - `PYTHON_ACTIVE_MARKET_STALE`: Python is healthy, but the broker quote is old (normally a closed market); the panel is yellow and the zones are historical, not a current entry cue.
 
 Hover over a zone to see source, state, raw research score, trend, normalized slope, efficiency, and distance in ATR.
@@ -89,4 +91,5 @@ Each zone is recorded once per completed decision bar. After four later M5 bars 
 - The first detector set uses M5 plus causal context computed from that history; cross-asset and macro inputs are not implemented yet.
 - Previous-day boundaries use UTC in Python and will be upgraded to explicit broker/session calendars.
 - A weekend/closed market displays the last known zones with `PYTHON_ACTIVE_MARKET_STALE`; no new labels mature until new completed bars arrive.
+- If terminal authorization or IPC drops, the last bridge zones stay visible with a yellow `PYTHON_STALE_*` heartbeat while Python reconnects automatically.
 - The chart overlay only renders rows whose symbol exactly matches the chart symbol.
